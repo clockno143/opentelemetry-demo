@@ -1,5 +1,3 @@
-# Copyright The OpenTelemetry Authors
-# SPDX-License-Identifier: Apache-2.0
 name: "Build and Publish"
 
 on:
@@ -15,3 +13,25 @@ jobs:
       push: true  # Flag to indicate whether to push the images
       version: ${{ github.event.release.tag_name }}  # Use the release tag as the version for the image
     secrets: inherit  # Inherit all secrets from the parent workflow
+
+  deploy_to_k8s:
+    runs-on: ubuntu-latest
+    needs: build_and_push_images  # Ensure this job only runs after the build_and_push_images job
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v1
+
+      - name: Configure kubectl
+        run: |
+          aws eks --region us-west-2 update-kubeconfig --name my-cluster
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
