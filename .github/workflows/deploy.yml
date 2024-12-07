@@ -1,81 +1,17 @@
-name: CI/CD Pipeline for OpenTelemetry Demo
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+name: "Build and Publish"
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
+  release:
+    types: [published]  # Trigger this workflow when a release is published
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_SHA: ${{ github.sha }}
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set up AWS CLI
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-
-    - name: Set up Docker Compose
-      run: |
-        sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-        docker-compose --version
-
-    - name: Authenticate with Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }} # Docker Hub username
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Verify Docker Login
-      run: docker info
-
-    - name: Build and Tag Docker Images with Docker Compose
-      run: |
-        export TAG=${{ github.sha }}
-        export IMAGE_NAME=sagarswagh/opentelemetry-demo
-        docker-compose build
-        docker-compose push
-
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment: production
-    env:
-      GITHUB_SHA: ${{ github.sha }}
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set up kubectl
-      uses: eks-actions/eks-kubectl-action@v1
-      with:
-        cluster-name: otel-demo-cluster
-        region: us-east-1
-        kubeconfig: ${{ secrets.KUBECONFIG }}
-
-    - name: Deploy to EKS
-      run: |
-        kubectl set image deployment/otel-demo-app otel-demo-app=sagarswagh/opentelemetry-demo:${{ github.sha }}
-        kubectl rollout status deployment/otel-demo-app
-
-
-  rollback:
-    runs-on: ubuntu-latest
-    if: failure()
-    needs: deploy
-    steps:
-    - name: Rollback to previous stable version
-      run: |
-        kubectl rollout undo deployment/otel-demo-app
+  build_and_push_images:
+    # Use a reusable workflow located in the same repository
+    uses: ./.github/workflows/component-build-images.yml
+    if: github.repository == 'open-telemetry/opentelemetry-demo'  # Ensure it only runs for a specific repository
+    with:
+      push: true  # Flag to indicate whether to push the images
+      version: ${{ github.event.release.tag_name }}  # Use the release tag as the version for the image
+    secrets: inherit  # Inherit all secrets from the parent workflow
