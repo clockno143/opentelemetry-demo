@@ -1,23 +1,21 @@
 name: "Build and Publish"
 
 on:
-  workflow_dispatch:
-  release:
-    types: [published]  # Trigger this workflow when a release is published
+  push:
+    branches:
+      - main  # Trigger on commits to the main branch
 
 jobs:
   build_and_push_images:
-    # Use a reusable workflow located in the same repository
     uses: ./.github/workflows/component-build-images.yml
-    if: github.repository == 'open-telemetry/opentelemetry-demo'  # Ensure it only runs for a specific repository
     with:
-      push: true  # Flag to indicate whether to push the images
-      version: ${{ github.event.release.tag_name }}  # Use the release tag as the version for the image
-    secrets: inherit  # Inherit all secrets from the parent workflow
+      push: true
+      version: ${{ github.sha }}  # Use the commit SHA as the version for the image
+    secrets: inherit
 
   deploy_to_k8s:
     runs-on: ubuntu-latest
-    needs: build_and_push_images  # Ensure this job only runs after the build_and_push_images job
+    needs: build_and_push_images
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,6 +29,9 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Log Debug Information
+        run: echo "Deploying to Kubernetes Cluster..."
 
       - name: Deploy to Kubernetes
         run: |
