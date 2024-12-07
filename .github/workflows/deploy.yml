@@ -1,6 +1,7 @@
 name: "Build and Publish"
 
 on:
+  workflow_dispatch:
   release:
     types: [published]  # Trigger this workflow when a release is published
 
