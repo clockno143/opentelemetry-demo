@@ -37,10 +37,14 @@ jobs:
     - name: Verify Docker Login
       run: docker info
 
-    - name: Build and Push Docker Image with Docker Compose
+    - name: Build and Tag Docker Images with Docker Compose
       run: |
-        TAG=$GITHUB_SHA docker-compose build
-        TAG=$GITHUB_SHA docker-compose push
+        TAG=${{ github.sha }}
+        IMAGE_NAME=sagarswagh/opentelemetry-demo
+        docker-compose build
+        docker-compose config | sed "s/\${IMAGE_NAME}/${IMAGE_NAME}/g; s/\${TAG}/${TAG}/g" > resolved-docker-compose.yml
+        docker-compose -f resolved-docker-compose.yml build
+        docker-compose -f resolved-docker-compose.yml push
 
   deploy:
     runs-on: ubuntu-latest
