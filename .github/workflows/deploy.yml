@@ -1,60 +1,44 @@
-name: CI/CD Pipeline for EKS
+name: Trigger OpenTelemetry Docker Build
 
 on:
   push:
     branches:
-      - main
+      - main  # Adjust this to the branch you want to trigger the workflow on
+    paths:
+      - '**/Dockerfile'  # Triggers on changes to Dockerfile files
   pull_request:
+    branches:
+      - main  # Adjust this to the branch you want to trigger the workflow on
+    paths:
+      - '**/Dockerfile'  # Triggers on changes to Dockerfile files
+  workflow_dispatch:  # Manual trigger option from the GitHub UI
+    inputs:
+      push:
+        description: 'Should the images be pushed'
+        required: false
+        default: false
+        type: boolean
+      version:
+        description: 'The version used when tagging the image'
+        required: false
+        default: 'dev'
+        type: string
+      dockerhub_repo:
+        description: 'Docker Hub repository'
+        required: false
+        default: 'otel/demo'
+        type: string
+      ghcr_repo:
+        description: 'GHCR repository'
+        required: false
+        default: 'ghcr.io/open-telemetry/demo'
+        type: string
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v2
-
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Build and Push Docker Images
-      run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/opentelemetry-demo:latest .
-        docker push ${{ secrets.DOCKER_USERNAME }}/opentelemetry-demo:latest
-
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: Run Unit Tests
-      run: |
-        # Example: Customize based on the application's testing framework
-        ./scripts/test.sh
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: SSH to EC2 and Deploy to EKS
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          echo "Logging into EC2"
-          aws eks update-kubeconfig --name my-eks-cluster --region us-east-1
-          kubectl apply -f k8s/deployment.yaml
+  call-opentelemetry-build:
+    uses: 'component-build-images.yml'  # Path to your original OpenTelemetry build workflow
+    with:
+      push: ${{ github.event.inputs.push }}
+      version: ${{ github.event.inputs.version }}
+      dockerhub_repo: ${{ github.event.inputs.dockerhub_repo }}
+      ghcr_repo: ${{ github.event.inputs.ghcr_repo }}
