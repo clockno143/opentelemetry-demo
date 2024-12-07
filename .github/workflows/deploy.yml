@@ -1,0 +1,60 @@
+name: CI/CD Pipeline for EKS
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and Push Docker Images
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/opentelemetry-demo:latest .
+        docker push ${{ secrets.DOCKER_USERNAME }}/opentelemetry-demo:latest
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Run Unit Tests
+      run: |
+        # Example: Customize based on the application's testing framework
+        ./scripts/test.sh
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: SSH to EC2 and Deploy to EKS
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          echo "Logging into EC2"
+          aws eks update-kubeconfig --name my-eks-cluster --region us-west-2
+          kubectl apply -f k8s/deployment.yaml
