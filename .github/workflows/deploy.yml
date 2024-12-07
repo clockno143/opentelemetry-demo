@@ -7,11 +7,27 @@ on:
 
 jobs:
   build_and_push_images:
-    uses: ./.github/workflows/component-build-images.yml
-    with:
-      push: true
-      version: ${{ github.sha }}  # Use the commit SHA as the version for the image
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker image to ECR
+        run: |
+          # Define the AWS ECR repository URL
+          ECR_REPO="307946641259.dkr.ecr.us-east-1.amazonaws.com/otel/demo"
+          
+          # Build the Docker image
+          docker build -t $ECR_REPO:${{ github.sha }} .
+
+          # Tag the Docker image
+          docker tag $ECR_REPO:${{ github.sha }} $ECR_REPO:${{ github.sha }}
+
+          # Push the image to Amazon ECR
+          docker push $ECR_REPO:${{ github.sha }}
 
   deploy_to_k8s:
     runs-on: ubuntu-latest
@@ -25,7 +41,7 @@ jobs:
 
       - name: Configure kubectl
         run: |
-          aws eks --region us-west-2 update-kubeconfig --name my-cluster
+          aws eks --region us-east-1 update-kubeconfig --name my-cluster
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -35,5 +51,6 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
+          # Apply the Kubernetes deployment and service YAML files
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
