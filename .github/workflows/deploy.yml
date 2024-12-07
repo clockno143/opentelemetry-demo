@@ -1,4 +1,4 @@
-name: Trigger OpenTelemetry Docker Build
+name: Trigger OpenTelemetry Docker Build and Deploy
 
 on:
   push:
@@ -33,12 +33,43 @@ on:
         required: false
         default: 'ghcr.io/open-telemetry/demo'
         type: string
+  release:
+    types: [published]
 
 jobs:
-  call-opentelemetry-build:
-    uses: 'component-build-images.yml'  # Path to your original OpenTelemetry build workflow
-    with:
-      push: ${{ github.event.inputs.push }}
-      version: ${{ github.event.inputs.version }}
-      dockerhub_repo: ${{ github.event.inputs.dockerhub_repo }}
-      ghcr_repo: ${{ github.event.inputs.ghcr_repo }}
+  build_and_push_images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to AWS ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.event.release.tag_name }} .
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.event.release.tag_name }}
+
+      - name: Set up kubectl
+        uses: aws-actions/configure-kubeconfig@v2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          cluster-name: ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Update Kubernetes deployment
+        run: |
+          kubectl set image deployment/${{ secrets.K8S_DEPLOYMENT_NAME }} ${{
+            secrets.K8S_DEPLOYMENT_NAME }}=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.event.release.tag_name }} --record
+          kubectl rollout status deployment/${{ secrets.K8S_DEPLOYMENT_NAME }}
