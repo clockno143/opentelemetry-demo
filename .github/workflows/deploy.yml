@@ -56,5 +56,5 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           echo "Logging into EC2"
-          aws eks update-kubeconfig --name my-eks-cluster --region us-west-2
+          aws eks update-kubeconfig --name my-eks-cluster --region us-east-1
           kubectl apply -f k8s/deployment.yaml
