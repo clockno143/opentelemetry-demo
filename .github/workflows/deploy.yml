@@ -59,15 +59,17 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up kubectl
-      uses: eks-actions/eks-kubectl-action@v1
+      uses: azure/setup-kubectl@v3
       with:
-        cluster-name: otel-demo-cluster
-        region: us-east-1
-        kubeconfig: ${{ secrets.KUBECONFIG }}
+        version: 'latest'
+
+    - name: Authenticate with EKS Cluster
+      run: |
+        aws eks update-kubeconfig --region us-east-1 --name otel-demo-cluster
 
     - name: Deploy to EKS
       run: |
-        kubectl set image deployment/otel-demo-app otel-demo-app=sagarswagh/opentelemetry-demo:${{ github.sha }}
+        kubectl set image deployment/otel-demo-app otel-demo-app=${{ env.IMAGE_NAME }}:${{ env.GITHUB_SHA }}
         kubectl rollout status deployment/otel-demo-app
 
 
