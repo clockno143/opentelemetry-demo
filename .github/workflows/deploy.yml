@@ -1,75 +1,69 @@
-name: Trigger OpenTelemetry Docker Build and Deploy
+name: CI/CD Pipeline for OpenTelemetry Demo
 
 on:
   push:
     branches:
-      - main  # Adjust this to the branch you want to trigger the workflow on
-    paths:
-      - '**/Dockerfile'  # Triggers on changes to Dockerfile files
+      - main
   pull_request:
     branches:
-      - main  # Adjust this to the branch you want to trigger the workflow on
-    paths:
-      - '**/Dockerfile'  # Triggers on changes to Dockerfile files
-  workflow_dispatch:  # Manual trigger option from the GitHub UI
-    inputs:
-      push:
-        description: 'Should the images be pushed'
-        required: false
-        default: false
-        type: boolean
-      version:
-        description: 'The version used when tagging the image'
-        required: false
-        default: 'dev'
-        type: string
-      dockerhub_repo:
-        description: 'Docker Hub repository'
-        required: false
-        default: 'otel/demo'
-        type: string
-      ghcr_repo:
-        description: 'GHCR repository'
-        required: false
-        default: 'ghcr.io/open-telemetry/demo'
-        type: string
-  release:
-    types: [published]
+      - main
 
 jobs:
-  build_and_push_images:
+  build:
     runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Set up Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install docker-compose
+
+    - name: Authenticate Docker with AWS ECR
+      run: |
+        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-1.amazonaws.com
+
+    - name: Build and Push Docker Image with Docker Compose
+      run: |
+        docker-compose build
+        docker-compose push
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: production
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+    - name: Set up kubectl
+      uses: eks-actions/eks-kubectl-action@v1
+      with:
+        cluster-name: otel-demo-cluster
+        region: us-east-1
+        kubeconfig: ${{ secrets.KUBECONFIG }}
 
-      - name: Log in to AWS ECR
-        run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Deploy to EKS
+      run: |
+        kubectl apply -f k8s/deployment.yaml
+        kubectl set image deployment/otel-demo-app otel-demo-app=123456789012.dkr.ecr.us-east-1.amazonaws.com/otel-demo-repo:$GITHUB_SHA
+        kubectl rollout status deployment/otel-demo-app
 
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.event.release.tag_name }} .
+  rollback:
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: deploy
 
-      - name: Push Docker image to ECR
-        run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.event.release.tag_name }}
-
-      - name: Set up kubectl
-        uses: aws-actions/configure-kubeconfig@v2
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          cluster-name: ${{ secrets.EKS_CLUSTER_NAME }}
-
-      - name: Update Kubernetes deployment
-        run: |
-          kubectl set image deployment/${{ secrets.K8S_DEPLOYMENT_NAME }} ${{
-            secrets.K8S_DEPLOYMENT_NAME }}=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:${{ github.event.release.tag_name }} --record
-          kubectl rollout status deployment/${{ secrets.K8S_DEPLOYMENT_NAME }}
+    steps:
+    - name: Rollback to previous stable version
+      run: |
+        kubectl rollout undo deployment/otel-demo-app
