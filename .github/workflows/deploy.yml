@@ -42,10 +42,16 @@ jobs:
 
     - name: Build and Tag Docker Images with Docker Compose
       run: |
-        export TAG=${{ github.sha }}
-        export IMAGE_NAME=sagarswagh/opentelemetry-demo
-        docker-compose build --no-cache
-        docker-compose push
+          export TAG=${{ github.sha }}
+          export IMAGE_NAME=sagarswagh/opentelemetry-demo:${TAG}
+          # Update the docker-compose.yml to include the tag
+          sed -i 's|image:.*|image: ${IMAGE_NAME}|' docker-compose.yml
+
+          # Build without cache
+          docker-compose build --no-cache
+
+          # Push the image with the commit SHA as the tag
+          docker-compose push
 
 
   deploy:
