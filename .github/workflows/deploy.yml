@@ -67,7 +67,7 @@ jobs:
       - name: Deploy to EKS
         run: |
           kubectl config current-context
-          kubectl set image deployment/otel-demo-app opentelemetry-demo=sagarswagh/opentelemetry-demo:latest-loadgenerator
+            kubectl apply -f deployment.yaml
           kubectl rollout status deployment/otel-demo-app
 
 
