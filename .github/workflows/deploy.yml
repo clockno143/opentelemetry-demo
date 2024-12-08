@@ -69,7 +69,11 @@ jobs:
       - name: Deploy to EKS
         run: |
           kubectl config current-context
-         
+          cd ..
+          cd ..
+          cd ..
+          cd ..
+          pwd
           kubectl get pods
           kubectl apply -f deployment.yaml
           kubectl rollout status deployment/otel-demo-app
