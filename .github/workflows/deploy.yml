@@ -73,7 +73,10 @@ jobs:
           cd ..
           cd ..
           cd ..
+          cd ..
+          cd ..
           pwd
+          ls
           kubectl get pods
           kubectl apply -f deployment.yaml
           kubectl rollout status deployment/otel-demo-app
