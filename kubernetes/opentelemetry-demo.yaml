@@ -9530,7 +9530,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: accountingservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-accountingservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-accountingservice'
           imagePullPolicy: IfNotPresent
           env:
             - name: OTEL_SERVICE_NAME
@@ -9594,7 +9594,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: adservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-adservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-adservice'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -9660,7 +9660,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: cartservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-cartservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-cartservice'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -9736,7 +9736,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: checkoutservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-checkoutservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-checkoutservice'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -9822,7 +9822,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: currencyservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-currencyservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-currencyservice'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -9884,7 +9884,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: emailservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-emailservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-emailservice'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -9980,7 +9980,7 @@ spec:
             - name: config-rw
               mountPath: /etc/flagd
         - name: flagdui
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-flagdui'
+          image: 'sagarswagh/opentelemetry-demo:latest-flagdui'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10059,7 +10059,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: frauddetectionservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-frauddetectionservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-frauddetectionservice'
           imagePullPolicy: IfNotPresent
           env:
             - name: OTEL_SERVICE_NAME
@@ -10127,7 +10127,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: frontend
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-frontend'
+          image: 'sagarswagh/opentelemetry-demo:latest-frontend'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10217,7 +10217,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: frontendproxy
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-frontendproxy'
+          image: 'sagarswagh/opentelemetry-demo:latest-frontendproxy'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10313,7 +10313,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: imageprovider
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-imageprovider'
+          image: 'sagarswagh/opentelemetry-demo:latest-imageprovider'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10375,7 +10375,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: kafka
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-kafka'
+          image: 'sagarswagh/opentelemetry-demo:latest-kafka'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10443,7 +10443,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: loadgenerator
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-loadgenerator'
+          image: 'sagarswagh/opentelemetry-demo:latest-loadgenerator'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10521,7 +10521,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: paymentservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-paymentservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-paymentservice'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10589,7 +10589,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: productcatalogservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-productcatalogservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-productcatalogservice'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10653,7 +10653,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: quoteservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-quoteservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-quoteservice'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10719,7 +10719,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: recommendationservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-recommendationservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-recommendationservice'
           imagePullPolicy: IfNotPresent
           ports:
             
@@ -10789,7 +10789,7 @@ spec:
       serviceAccountName: opentelemetry-demo
       containers:
         - name: shippingservice
-          image: 'ghcr.io/open-telemetry/demo:1.12.0-shippingservice'
+          image: 'sagarswagh/opentelemetry-demo:latest-shippingservice'
           imagePullPolicy: IfNotPresent
           ports:
             
