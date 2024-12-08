@@ -44,7 +44,7 @@ jobs:
       run: |
         export TAG=${{ github.sha }}
         export IMAGE_NAME=sagarswagh/opentelemetry-demo
-        docker-compose build
+        docker-compose build --no-cache
         docker-compose push
 
 
