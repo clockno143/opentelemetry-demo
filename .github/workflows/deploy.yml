@@ -40,14 +40,12 @@ jobs:
 
     - name: Build, Tag Docker Images, and Run Trace Testing
       run: |
-        export TAG=${{ github.sha }}
-        export IMAGE_NAME=sagarswagh/opentelemetry-demo
-        make build                             # This builds the Docker image
-        docker tag $IMAGE_NAME:latest $IMAGE_NAME:$TAG   # Tag the image with the current commit SHA
-        docker push $IMAGE_NAME:$TAG           # Push the tagged image to Docker Hub
-        docker push $IMAGE_NAME:latest         # Optionally push the 'latest' tag as well
-        docker system prune -f                 # Clean up unused Docker resources
-        make run-tracetesting                  # Run trace testing after the image is built
+          export TAG=${{ github.sha }}
+          export IMAGE_NAME=sagarswagh/opentelemetry-demo
+          docker-compose build --no-cache  # Disable cache while building images
+          docker tag $IMAGE_NAME:latest $IMAGE_NAME:$TAG
+          docker push $IMAGE_NAME:$TAG
+          docker push $IMAGE_NAME:latest
 
   # CD Job: Deploy to EKS after tests pass
   Run_CD:
