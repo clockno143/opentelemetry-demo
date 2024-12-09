@@ -49,7 +49,7 @@ jobs:
 
   run_tests:
     runs-on: ubuntu-latest
-    name: "Run CI"
+    name: "Run Tests"
     needs: build  # Ensure tests run after build
     steps:
       - name: Checkout code
@@ -87,7 +87,6 @@ jobs:
           ls
           kubectl get pods
           kubectl apply -f deployment.yaml
-          kubectl rollout status deployment/otel-demo-app
 
   rollback:
     runs-on: ubuntu-latest
