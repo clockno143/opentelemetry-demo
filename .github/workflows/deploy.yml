@@ -93,6 +93,16 @@ jobs:
     if: failure()
     needs: deploy
     steps:
-    - name: Rollback to previous stable version
-      run: |
-        kubectl rollout undo deployment/otel-demo-app
+      - name: Set up AWS CLI
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region us-east-1
+  
+      - name: Set up kubectl
+        run: |
+          aws eks --region us-east-1 update-kubeconfig --name otel-demo-cluster
+  
+      - name: Rollback to previous stable version
+        run: |
+          kubectl rollout undo deployment/otel-demo-app
